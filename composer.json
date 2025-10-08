@@ -1,14 +1,14 @@
 {
-    "name": "lizzyman/composer-mvc-template",
+    "name": "lizzyman04/composer-mvc-template",
     "description": "A lightweight yet powerful MVC template for PHP projects using Composer.",
     "type": "project",
     "require": {
-        "illuminate/database": "^12.21",
+        "phpmailer/phpmailer": "^6.11",
         "vlucas/phpdotenv": "^5.6",
-        "illuminate/http": "^12.21",
-        "illuminate/support": "^12.21",
-        "laravel/serializable-closure": "^2.0",
-        "phpmailer/phpmailer": "^6.10"
+        "cycle/orm": "^2.11",
+        "cycle/database": "^2.15",
+        "cycle/annotated": "^4.3",
+        "cycle/schema-builder": "^2.11"
     },
     "license": "MIT",
     "autoload": {
@@ -18,11 +18,8 @@
         }
     },
     "scripts": {
-        "serve": "php -S localhost:8000 -t public",
-        "migrate": "php db/migrate.php",
-        "migrate:reset": "php db/migrate.php --reset",
-        "migrate:seed": "php db/migrate.php --seed",
-        "migrate:fresh": "php db/migrate.php --reset --seed"
+        "dev": "php -S localhost:8000 -t public",
+        "schema": "php db/schema.php"
     },
     "authors": [
         {

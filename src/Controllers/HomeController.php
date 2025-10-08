@@ -3,29 +3,33 @@
 namespace Source\Controllers;
 
 use Core\Helpers\AuthHelper;
+use Core\Helpers\ORMHelper;
 use Source\Models\Post;
-use Source\Models\User;
 use Core\View;
 
 class HomeController
 {
     public function index()
     {
-        $user = AuthHelper::check();
+        $credentials = AuthHelper::check();
 
-        if ($user) {
-            $posts = Post::where('user_id', $user->id)->get();
+        if ($credentials) {
+            $posts = ORMHelper::select(Post::class)
+                ->where('user_id', $credentials['user_id'])
+                ->fetchAll();
+
             View::render('home', [
                 'title' => 'Home',
                 'posts' => $posts,
                 'user_logged_in' => true,
-                'user_name' => $user->name,
+                'user_name' => $credentials['name'],
+                'user_role' => $credentials['role']
             ]);
         } else {
             View::render('home', [
                 'title' => 'Home',
                 'message' => 'You are not logged in.',
-                'user_logged_in' => false,
+                'user_logged_in' => false
             ]);
         }
     }

@@ -1,17 +1,11 @@
 $(document).ready(function () {
-    // Cache selectors for performance
     const $loginForm = $('#loginForm');
     const $registerForm = $('#registerForm');
     const $errorContainer = $('<div class="fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg bg-red-100 text-red-700 hidden"></div>').appendTo('body');
     const $successContainer = $('<div class="fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg bg-green-100 text-green-700 hidden"></div>').appendTo('body');
 
-    // Email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Password strength check (at least 8 chars, 1 letter, 1 number)
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-
-    // Function to show notification
     function showNotification($container, message) {
         $container.text(message).removeClass('hidden').fadeIn(300);
         setTimeout(() => $container.fadeOut(300, () => $container.addClass('hidden')), 3000);
@@ -24,7 +18,6 @@ $(document).ready(function () {
         const email = $('input[name="email"]', this).val().trim();
         const password = $('input[name="password"]', this).val();
 
-        // Client-side validation
         if (!email || !password) {
             showNotification($errorContainer, 'Please fill in all fields for login.');
             return;
@@ -35,19 +28,19 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '/auth_action',
+            url: '/login',
             method: 'POST',
-            data: $(this).serialize() + '&action=login',
+            data: $(this).serialize(),
             dataType: 'json',
             beforeSend: function () {
                 $loginForm.find('button').prop('disabled', true).text('Logging in...');
             },
-            success: function (data) {
-                if (data.success) {
+            success: function (response) {
+                if (response.success) {
                     showNotification($successContainer, 'Login successful! Redirecting...');
-                    setTimeout(() => window.location.href = data.redirect, 1000);
+                    setTimeout(() => window.location.href = response.data.redirect ?? '/', 1000);
                 } else {
-                    showNotification($errorContainer, data.error || 'Login failed.');
+                    showNotification($errorContainer, response.data.error || 'Login failed.');
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -67,9 +60,7 @@ $(document).ready(function () {
         const name = $('input[name="name"]', this).val().trim();
         const email = $('input[name="email"]', this).val().trim();
         const password = $('input[name="password"]', this).val();
-        const address = $('input[name="address"]', this).val().trim();
 
-        // Client-side validation
         if (!name || !email || !password) {
             showNotification($errorContainer, 'Please fill in all required fields for registration.');
             return;
@@ -78,25 +69,21 @@ $(document).ready(function () {
             showNotification($errorContainer, 'Please enter a valid email address.');
             return;
         }
-        if (!passwordRegex.test(password)) {
-            showNotification($errorContainer, 'Password must be at least 8 characters long with at least one letter and one number.');
-            return;
-        }
 
         $.ajax({
-            url: '/auth_action',
+            url: '/register',
             method: 'POST',
-            data: $(this).serialize() + '&action=register',
+            data: $(this).serialize(),
             dataType: 'json',
             beforeSend: function () {
                 $registerForm.find('button').prop('disabled', true).text('Registering...');
             },
             success: function (data) {
-                if (data.success) {
+                if (response.data.success) {
                     showNotification($successContainer, 'Registration successful! Redirecting...');
-                    setTimeout(() => window.location.href = data.redirect, 1000);
+                    setTimeout(() => window.location.href = response.data.redirect, 1000);
                 } else {
-                    showNotification($errorContainer, data.error || 'Registration failed.');
+                    showNotification($errorContainer, response.data.error || 'Registration failed.');
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {

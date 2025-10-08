@@ -34,4 +34,5 @@ error_reporting(E_ALL);
 // ================================
 require_once BASE_PATH . '/vendor/autoload.php';
 require_once BASE_PATH . '/db/connection.php';
-Router::run(include BASE_PATH . '/config/endpoints.php');
+
+Router::run(include BASE_PATH . '/config/router/index.php');

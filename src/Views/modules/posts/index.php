@@ -1,0 +1,1 @@
+<a href="/">There's nothing here yet... posts available on the home page..</a>

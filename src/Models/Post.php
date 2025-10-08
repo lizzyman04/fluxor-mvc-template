@@ -2,20 +2,42 @@
 
 namespace Source\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use DateTimeImmutable;
+use DateTimeInterface;
+use Cycle\Annotated\Annotation\Entity;
+use Cycle\Annotated\Annotation\Column;
+use Cycle\Annotated\Annotation\Relation\BelongsTo;
 
-class Post extends Model
+#[Entity(table: 'posts')]
+class Post
 {
-    use HasFactory;
+    #[Column(type: 'primary')]
+    public int $id;
 
-    protected $table = 'posts';
+    #[Column(type: 'string')]
+    public string $title;
 
-    protected $fillable = ['title', 'content', 'user_id'];
+    #[Column(type: 'text')]
+    public string $content;
 
-    public function user(): BelongsTo
+    #[BelongsTo(target: User::class, innerKey: 'user_id', fkAction: 'CASCADE')]
+    public User $user;
+
+    #[Column(type: 'datetime', name: 'created_at')]
+    public DateTimeInterface $createdAt;
+
+    #[Column(type: 'datetime', name: 'updated_at')]
+    public DateTimeInterface $updatedAt;
+
+    public function __construct()
     {
-        return $this->belongsTo(User::class);
+        $this->createdAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    // Método para acessar o user_id diretamente
+    public function getUserId(): int
+    {
+        return $this->user->id;
     }
 }

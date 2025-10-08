@@ -3,99 +3,107 @@
 namespace Source\Controllers;
 
 use Core\Helpers\AuthHelper;
-use Source\Models\User;
+use Core\Helpers\ResponseHelper;
+use Core\Helpers\ORMHelper;
 use Core\View;
+use Source\Models\User;
 
 class AuthController
 {
-    public function auth()
+    public function showAuth()
     {
-        AuthHelper::start();
-
-        if (isset($_SESSION['user_id'])) {
+        if (AuthHelper::check()) {
             header('Location: /');
             exit;
         }
 
-        View::render('auth', ['title' => 'Authentication']);
+        View::render('auth', [
+            'title' => 'Authentication',
+            'csrf_token' => AuthHelper::csrfToken()
+        ]);
     }
 
-    public function authenticate()
+    public function login()
     {
-        AuthHelper::start();
-
-        $action = $_POST['action'] ?? '';
-
-        switch ($action) {
-            case 'login':
-                echo json_encode($this->handleLogin());
-                break;
-            case 'register':
-                echo json_encode($this->handleRegister());
-                break;
-            default:
-                http_response_code(400);
-                echo json_encode(['error' => 'Invalid action.']);
+        if (!AuthHelper::validateCsrf($_POST['csrf_token'] ?? '')) {
+            ResponseHelper::error('Invalid CSRF token', 419);
         }
-    }
 
-    private function handleLogin()
-    {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $remember = isset($_POST['remember']);
 
-        // Validate inputs using AuthHelper
-        $validation = AuthHelper::validate($email, null, $password);
-        if (!$validation['isValid']) {
-            http_response_code(400);
-            return ['error' => $validation['error']];
+        $user = ORMHelper::select(User::class)
+            ->where('email', $email)
+            ->fetchOne();
+
+        if (!$user || !password_verify($password, $user->password)) {
+            ResponseHelper::error('Invalid credentials', 401);
         }
 
-        $user = User::where('email', $email)->first();
+        $credentials = [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'role' => $user->role
+        ];
 
-        if ($user && password_verify($password, $user->password)) {
-            $_SESSION['user_id'] = $user->id;
-            return ['success' => true, 'redirect' => '/'];
-        }
+        AuthHelper::setup($credentials, $remember);
 
-        http_response_code(401);
-        return ['error' => 'Invalid credentials.'];
+        ResponseHelper::success([
+            'message' => 'Login successful',
+            'redirect' => $_POST['redirect'] ?? '/'
+        ]);
     }
 
-    private function handleRegister()
+    public function register()
     {
+        if (!AuthHelper::validateCsrf($_POST['csrf_token'] ?? '')) {
+            ResponseHelper::error('Invalid CSRF token', 419);
+        }
+
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $remember = isset($_POST['remember']);
 
-        // Validate inputs using AuthHelper
-        $validation = AuthHelper::validate($email, null, $password);
-        if (!$validation['isValid']) {
-            http_response_code(400);
-            return ['error' => $validation['error']];
+        $existingUser = ORMHelper::select(User::class)
+            ->where('email', $email)
+            ->fetchOne();
+
+        if ($existingUser) {
+            ResponseHelper::error('User already exists', 409);
         }
 
-        if (User::where('email', $email)->exists()) {
-            http_response_code(409);
-            return ['error' => 'User already exists.'];
-        }
+        $user = new User();
+        $user->name = $name;
+        $user->email = $email;
+        $user->password = password_hash($password, PASSWORD_DEFAULT);
+        $user->role = 'user';
 
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_BCRYPT),
-            'role' => 'user', // Default role
-        ]);
+        $manager = ORMHelper::getManager();
+        $manager->persist($user);
+        $manager->run();
 
-        $_SESSION['user_id'] = $user->id;
-        return ['success' => true, 'redirect' => '/'];
+        $credentials = [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'role' => $user->role
+        ];
+
+        AuthHelper::setup($credentials, $remember);
+
+        ResponseHelper::success([
+            'message' => 'Registration successful',
+            'redirect' => '/'
+        ], 201);
     }
 
     public function logout()
     {
-        AuthHelper::start();
-        session_destroy();
-        header('Location: /');
+        AuthHelper::logout();
+        header('Location: /auth');
         exit;
     }
 }

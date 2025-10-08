@@ -2,71 +2,63 @@
 
 namespace Core\Helpers;
 
-use Core\View;
+use Core\Authenticator;
 use Source\Models\User;
 
 class AuthHelper
 {
     /**
-     * Ensures the session is started.
+     * Validate user credentials against database
+     * Modify this method according to your user model structure
      */
-    public static function start()
+    private static function validateCredentials(array $credentials): bool
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        if (empty($credentials) || !isset($credentials['user_id'])) {
+            return false;
         }
+
+        // Example validation - adjust according to your user model
+        // This checks if the user still exists in the database
+        $user = ORMHelper::select(User::class)
+            ->where('id', $credentials['user_id'])
+            ->fetchOne();
+
+        return $user !== null;
     }
 
-    /**
-     * Checks if the user is authenticated.
-     *
-     * @return User|null Returns the authenticated user or null if authentication fails
-     */
-    public static function check()
+    public static function check(): ?array
     {
-        self::start();
+        $credentials = Authenticator::check();
 
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /auth');
-            exit;
+        if (!$credentials) {
+            return null;
         }
 
-        $user = User::find($_SESSION['user_id']);
-        if (!$user) {
-            session_destroy();
-            header('Location: /auth');
-            exit;
+        if (!self::validateCredentials($credentials)) {
+            Authenticator::destroySession();
+            return null;
         }
 
-        return $user;
+        return $credentials;
     }
 
-    /**
-     * Validates login credentials (email or phone, and password).
-     *
-     * @param string|null $email
-     * @param string|null $phone
-     * @param string $password
-     * @return array Validation result with 'isValid' and 'error' (if any)
-     */
-    public static function validate(?string $email, ?string $phone, string $password): array
+    public static function setup(array $credentials, bool $remember = false): void
     {
-        if (empty($email) && empty($phone)) {
-            return ['isValid' => false, 'error' => 'Email or phone must be provided.'];
-        }
+        Authenticator::setupSession($credentials, $remember);
+    }
 
-        if (empty($password)) {
-            return ['isValid' => false, 'error' => 'Password is required.'];
-        }
+    public static function logout(): void
+    {
+        Authenticator::destroySession();
+    }
 
-        if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return ['isValid' => false, 'error' => 'Invalid email.'];
-        }
+    public static function csrfToken(): string
+    {
+        return Authenticator::csrfToken();
+    }
 
-        if ($phone && !preg_match('/^\+?[1-9]\d{1,14}$/', $phone)) {
-            return ['isValid' => false, 'error' => 'Invalid phone number.'];
-        }
-
-        return ['isValid' => true, 'error' => null];
+    public static function validateCsrf(string $token): bool
+    {
+        return Authenticator::validateCsrf($token);
     }
 }

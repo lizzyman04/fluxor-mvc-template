@@ -2,137 +2,206 @@
 
 namespace Source\Controllers;
 
-use Core\Helpers\AuthHelper;
-use Source\Models\Post;
 use Core\View;
+use Source\Models\Post;
+use Core\Helpers\ORMHelper;
+use Core\Helpers\AuthHelper;
+use Core\Helpers\ResponseHelper;
+use Source\Models\User;
 
 class PostController
 {
-    /**
-     * Display the form to create a new post.
-     */
-    public function create()
+    public function index()
     {
-        $user = AuthHelper::check();
-        View::render('modules/posts/create', [
-            'title' => 'New Post',
-            'user_name' => $user->name,
-        ]);
-    }
-
-    /**
-     * Store a new post.
-     */
-    public function store()
-    {
-        $user = AuthHelper::check();
-
-        $title = $_POST['title'] ?? '';
-        $content = $_POST['content'] ?? '';
-
-        if (empty($title) || empty($content)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Title and content are required.']);
-            return;
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            header('Location: /auth');
+            exit;
         }
 
-        $post = Post::create([
-            'user_id' => $user->id,
-            'title' => $title,
-            'content' => $content,
-        ]);
+        $posts = ORMHelper::select(Post::class)
+            ->where('user_id', $credentials['user_id'])
+            ->fetchAll();
 
-        echo json_encode(['success' => true, 'redirect' => '/']);
+        View::render('modules/posts/index', [
+            'title' => 'My Posts',
+            'posts' => $posts,
+            'user' => $credentials
+        ]);
     }
 
-    /**
-     * Display a single post.
-     */
     public function show($id)
     {
-        $user = AuthHelper::check();
-        $post = Post::find($id);
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            header('Location: /auth');
+            exit;
+        }
 
-        if (!$post || $post->user_id !== $user->id) {
-            http_response_code(404);
-            View::render('404', ['title' => 'Post Not Found']);
+        $post = ORMHelper::select(Post::class)
+            ->where('id', $id)
+            ->where('user_id', $credentials['user_id'])
+            ->fetchOne();
+
+        if (!$post) {
+            View::render('404', [
+                'title' => 'Post Not Found',
+                'message' => 'The post you are looking for does not exist or you do not have permission to view it.'
+            ]);
             return;
         }
 
         View::render('modules/posts/show', [
             'title' => $post->title,
             'post' => $post,
-            'user_name' => $user->name,
+            'user' => $credentials
         ]);
     }
 
-    /**
-     * Display the form to edit a post.
-     */
-    public function edit($id)
+    public function create()
     {
-        $user = AuthHelper::check();
-        $post = Post::find($id);
-
-        if (!$post || $post->user_id !== $user->id) {
-            http_response_code(404);
-            View::render('404', ['title' => 'Post Not Found']);
-            return;
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            header('Location: /auth');
+            exit;
         }
 
-        View::render('modules/posts/edit', [
-            'title' => 'Edit Post',
-            'post' => $post,
-            'user_name' => $user->name,
+        View::render('modules/posts/create', [
+            'title' => 'Create Post',
+            'user' => $credentials,
+            'csrf_token' => AuthHelper::csrfToken()
         ]);
     }
 
-    /**
-     * Update an existing post.
-     */
-    public function update($id)
+    public function store()
     {
-        $user = AuthHelper::check();
-        $post = Post::find($id);
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            ResponseHelper::error('Unauthorized', 401);
+        }
 
-        if (!$post || $post->user_id !== $user->id) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Post not found.']);
-            return;
+        if (!AuthHelper::validateCsrf($_POST['csrf_token'] ?? '')) {
+            ResponseHelper::error('Invalid CSRF token', 419);
         }
 
         $title = $_POST['title'] ?? '';
         $content = $_POST['content'] ?? '';
 
         if (empty($title) || empty($content)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Title and content are required.']);
-            return;
+            ResponseHelper::error('Title and content are required', 400);
         }
 
-        $post->update([
-            'title' => $title,
-            'content' => $content,
-        ]);
+        $user = ORMHelper::select(User::class)
+            ->where('id', $credentials['user_id'])
+            ->fetchOne();
 
-        echo json_encode(['success' => true, 'redirect' => '/']);
+        $post = new Post();
+        $post->title = $title;
+        $post->content = $content;
+        $post->user = $user;
+
+        $manager = ORMHelper::getManager();
+        $manager->persist($post);
+        $manager->run();
+
+        ResponseHelper::success([
+            'message' => 'Post created successfully',
+            'redirect' => '/posts'
+        ], 201);
     }
 
-    /**
-     * Delete a post.
-     */
-    public function destroy($id)
+    public function edit($id)
     {
-        $user = AuthHelper::check();
-        $post = Post::find($id);
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            header('Location: /auth');
+            exit;
+        }
 
-        if (!$post || $post->user_id !== $user->id) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Post not found.']);
+        $post = ORMHelper::select(Post::class)
+            ->where('id', $id)
+            ->where('user_id', $credentials['user_id'])
+            ->fetchOne();
+
+        if (!$post) {
+            View::render('404', [
+                'title' => 'Post Not Found',
+                'message' => 'The post you are trying to edit does not exist or you do not have permission to edit it.'
+            ]);
             return;
         }
 
-        $post->delete();
-        echo json_encode(['success' => true, 'redirect' => '/']);
+        View::render('modules/posts/edit', [
+            'title' => 'Edit Post',
+            'post' => $post,
+            'user' => $credentials,
+            'csrf_token' => AuthHelper::csrfToken()
+        ]);
+    }
+
+    public function update($id)
+    {
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            ResponseHelper::error('Unauthorized', 401);
+        }
+
+        if (!AuthHelper::validateCsrf($_POST['csrf_token'] ?? '')) {
+            ResponseHelper::error('Invalid CSRF token', 419);
+        }
+
+        $post = ORMHelper::select(Post::class)
+            ->where('id', $id)
+            ->where('user_id', $credentials['user_id'])
+            ->fetchOne();
+
+        if (!$post) {
+            ResponseHelper::error('Post not found', 404);
+        }
+
+        $title = $_POST['title'] ?? '';
+        $content = $_POST['content'] ?? '';
+
+        if (empty($title) || empty($content)) {
+            ResponseHelper::error('Title and content are required', 400);
+        }
+
+        $post->title = $title;
+        $post->content = $content;
+
+        $manager = ORMHelper::getManager();
+        $manager->persist($post);
+        $manager->run();
+
+        ResponseHelper::success([
+            'message' => 'Post updated successfully',
+            'redirect' => '/posts/' . $id
+        ]);
+    }
+
+    public function delete($id)
+    {
+        $credentials = AuthHelper::check();
+        if (!$credentials) {
+            ResponseHelper::error('Unauthorized', 401);
+        }
+
+        $post = ORMHelper::select(Post::class)
+            ->where('id', $id)
+            ->where('user_id', $credentials['user_id'])
+            ->fetchOne();
+
+        if (!$post) {
+            ResponseHelper::error('Post not found', 404);
+        }
+
+        $manager = ORMHelper::getManager();
+        $manager->delete($post);
+        $manager->run();
+
+        ResponseHelper::success([
+            'message' => 'Post deleted successfully',
+            'redirect' => '/posts'
+        ]);
     }
 }

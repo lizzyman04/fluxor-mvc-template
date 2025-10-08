@@ -7,6 +7,7 @@ ob_start();
         <div class="bg-white rounded-lg shadow-card p-8">
             <h1 class="text-3xl font-heading font-bold text-gray-800 mb-6">Edit Post</h1>
             <form id="editPostForm" data-id="<?= $post->id ?>" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="<?= $csrf_token ?? '' ?>">
                 <div>
                     <label for="title" class="block text-gray-700 font-semibold mb-2">Title</label>
                     <input type="text" name="title" id="title" value="<?= htmlspecialchars($post->title) ?>" required

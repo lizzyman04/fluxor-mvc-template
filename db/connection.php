@@ -1,23 +1,36 @@
 <?php
 
-use Illuminate\Database\Capsule\Manager as Capsule;
 use Dotenv\Dotenv;
+use Cycle\Database;
+use Cycle\Database\Config;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-$capsule = new Capsule;
-
-$capsule->addConnection([
-    'driver'    => $_ENV['DB_CONNECTION'],
-    'host'      => $_ENV['DB_HOST'],
-    'port'      => $_ENV['DB_PORT'],
-    'database'  => $_ENV['DB_DATABASE'],
-    'username'  => $_ENV['DB_USERNAME'],
-    'password'  => $_ENV['DB_PASSWORD'],
-    'charset'   => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
+$dbConfig = new Config\DatabaseConfig([
+    'default' => 'default',
+    'databases' => [
+        'default' => ['connection' => $_ENV['DB_CONNECTION'] ?? 'mysql']
+    ],
+    'connections' => [
+        'mysql' => new Config\MySQLDriverConfig(
+            connection: new Config\MySQL\TcpConnectionConfig(
+                database: $_ENV['DB_DATABASE'],
+                host: $_ENV['DB_HOST'],
+                port: (int) ($_ENV['DB_PORT'] ?? 3306),
+                user: $_ENV['DB_USERNAME'],
+                password: $_ENV['DB_PASSWORD']
+            ),
+            queryCache: true
+        ),
+        'sqlite' => new Config\SQLiteDriverConfig(
+            connection: new Config\SQLite\FileConnectionConfig(
+                database: $_ENV['DB_DATABASE'] ?? __DIR__ . '/../database.sqlite'
+            )
+        )
+    ]
 ]);
 
-$capsule->setAsGlobal();
-$capsule->bootEloquent();
+$database = new Database\DatabaseManager($dbConfig);
+
+return $database;

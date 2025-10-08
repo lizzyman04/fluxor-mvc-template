@@ -1,12 +1,10 @@
 $(document).ready(function () {
-    // Cache selectors
     const $createForm = $('#createPostForm');
     const $editForm = $('#editPostForm');
     const $deleteButtons = $('.delete-post');
     const $errorContainer = $('<div class="fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg bg-red-100 text-red-700 hidden"></div>').appendTo('body');
     const $successContainer = $('<div class="fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg bg-green-100 text-green-700 hidden"></div>').appendTo('body');
 
-    // Notification function
     function showNotification($container, message) {
         $container.text(message).removeClass('hidden').fadeIn(300);
         setTimeout(() => $container.fadeOut(300, () => $container.addClass('hidden')), 3000);
@@ -31,12 +29,12 @@ $(document).ready(function () {
             beforeSend: function () {
                 $createForm.find('button').prop('disabled', true).text('Creating...');
             },
-            success: function (data) {
-                if (data.success) {
+            success: function (response) {
+                if (response.success) {
                     showNotification($successContainer, 'Post created! Redirecting...');
-                    setTimeout(() => window.location.href = data.redirect, 1000);
+                    setTimeout(() => window.location.href = response.data.redirect, 1000);
                 } else {
-                    showNotification($errorContainer, data.error || 'Failed to create post.');
+                    showNotification($errorContainer, response.data.error || 'Failed to create post.');
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -69,12 +67,12 @@ $(document).ready(function () {
             beforeSend: function () {
                 $editForm.find('button').prop('disabled', true).text('Updating...');
             },
-            success: function (data) {
-                if (data.success) {
+            success: function (response) {
+                if (response.success) {
                     showNotification($successContainer, 'Post updated! Redirecting...');
-                    setTimeout(() => window.location.href = data.redirect, 1000);
+                    setTimeout(() => window.location.href = response.data.redirect, 1000);
                 } else {
-                    showNotification($errorContainer, data.error || 'Failed to update post.');
+                    showNotification($errorContainer, response.data.error || 'Failed to update post.');
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -115,12 +113,12 @@ $(document).ready(function () {
                 beforeSend: function () {
                     $modal.find('.confirm-btn').prop('disabled', true).text('Deleting...');
                 },
-                success: function (data) {
-                    if (data.success) {
+                success: function (response) {
+                    if (response.success) {
                         showNotification($successContainer, 'Post deleted! Redirecting...');
-                        setTimeout(() => window.location.href = data.redirect, 1000);
+                        setTimeout(() => window.location.href = response.data.redirect, 1000);
                     } else {
-                        showNotification($errorContainer, data.error || 'Failed to delete post.');
+                        showNotification($errorContainer, response.data.error || 'Failed to delete post.');
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {

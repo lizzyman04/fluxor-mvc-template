@@ -2,34 +2,43 @@
 
 namespace Source\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use DateTimeImmutable;
+use DateTimeInterface;
+use Cycle\Annotated\Annotation\Entity;
+use Cycle\Annotated\Annotation\Column;
+use Cycle\Annotated\Annotation\Relation\HasMany;
 
-class User extends Model
+#[Entity(table: 'users')]
+class User
 {
-    // Use the HasFactory trait for creating factories (useful for testing and seeding)
-    use HasFactory;
+    #[Column(type: 'primary')]
+    public int $id;
 
-    // Define the table associated with this model
-    protected $table = 'users';
+    #[Column(type: 'string')]
+    public string $name;
 
-    // Define the attributes that can be mass-assigned (e.g., through create() or update())
-    protected $fillable = ['name', 'email', 'password'];
+    #[Column(type: 'string')]
+    public string $email;
 
-    // Define attributes that should be hidden when the model is converted to an array or JSON
-    // In this case, the password will be hidden to protect sensitive data
-    protected $hidden = ['password'];
+    #[Column(type: 'string')]
+    public string $password;
 
-    /**
-     * Define the relationship between User and Post
-     * A User can have many Posts
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function posts(): HasMany
+    #[Column(type: 'string')]
+    public string $role;
+
+    #[Column(type: 'datetime', name: 'created_at')]
+    public DateTimeInterface $createdAt;
+
+    #[Column(type: 'datetime', name: 'updated_at')]
+    public DateTimeInterface $updatedAt;
+
+    #[HasMany(target: Post::class)]
+    public array $posts = [];
+
+    public function __construct()
     {
-        // Return the relationship: a User has many Posts
-        return $this->hasMany(Post::class);
+        $this->createdAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
+        $this->role = 'user';
     }
 }

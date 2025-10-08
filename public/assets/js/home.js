@@ -1,6 +1,6 @@
 $(document).ready(function () {
     // Cache selector
-    const $postLink = $('.bg-blue-600[href="/new_post"]');
+    const $postLink = $('#post-a-new-blog');
 
     // Create modal for confirmation
     const $modal = $(`

@@ -35,7 +35,8 @@ ob_start();
 
             <div class="mt-6 flex space-x-4">
                 <a href="/new-post"
-                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold">Post
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold"
+                    id="post-a-new-blog">Post
                     a new blog</a>
                 <a href="/logout"
                     class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-200 font-semibold">Logout</a>
