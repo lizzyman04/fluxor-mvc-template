@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Cycle ORM Factory
+ */
+
+require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/connection.php';
+
 use Cycle\ORM;
 use Cycle\Schema;
 use Cycle\Database;
@@ -13,7 +20,7 @@ class ORMFactory
     public static function getORM(): ORM\ORMInterface
     {
         if (self::$instance === null) {
-            $database = require 'connection.php';
+            $database = require __DIR__ . '/connection.php';
             self::$instance = self::initializeORM($database);
         }
 
@@ -23,7 +30,7 @@ class ORMFactory
     private static function initializeORM(Database\DatabaseManager $dbal): ORM\ORMInterface
     {
         $classLocator = (new Tokenizer\Tokenizer(new Tokenizer\Config\TokenizerConfig([
-            'directories' => [__DIR__ . '/../src/Models'],
+            'directories' => [base_path('src/Models')],
         ])))->classLocator();
 
         $schema = (new Schema\Compiler())->compile(new Schema\Registry($dbal), [
