@@ -1,9 +1,11 @@
-<?php
-http_response_code(404);
-$title = 'Page Not Found';
-ob_start();
-?>
+<?php use Fluxor\View; ?>
+<?php View::extend('layouts/main'); ?>
 
+<?php View::section('title'); ?>
+404 - Page Not Found
+<?php View::endSection(); ?>
+
+<?php View::section('content'); ?>
 <div class="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-card p-8 text-center max-w-md mx-auto">
         <h1 class="text-6xl font-heading font-bold text-clifford mb-4">404</h1>
@@ -13,8 +15,4 @@ ob_start();
             Back Home</a>
     </div>
 </div>
-
-<?php
-$content = ob_get_clean();
-require_once __DIR__ . '/layouts/main.php';
-?>
+<?php View::endSection(); ?>

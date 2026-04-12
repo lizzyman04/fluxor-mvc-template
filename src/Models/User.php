@@ -38,8 +38,8 @@ class User
     #[Column(type: "datetime", name: "updated_at")]
     private DateTimeInterface $updatedAt;
 
-    #[HasMany(target: Post::class, innerKey: 'user_id', fkAction: 'CASCADE')]
-    private array $posts = [];
+    #[HasMany(target: Post::class, innerKey: 'id', outerKey: 'user_id', fkAction: 'CASCADE')]
+    private $posts;
 
     public function __construct()
     {
@@ -83,7 +83,7 @@ class User
         return $this->updatedAt;
     }
 
-    public function getPosts(): array
+    public function getPosts()
     {
         return $this->posts;
     }

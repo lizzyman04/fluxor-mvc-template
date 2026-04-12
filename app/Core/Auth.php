@@ -73,7 +73,7 @@ class Auth
         [$dataString, $tokenPurpose, $timestamp, $random, $signature] = $parts;
 
         $tokenExpiry = self::getConfig('TOKEN_EXPIRY', 86400);
-        if (time() - (int)$timestamp > $tokenExpiry) {
+        if (time() - (int) $timestamp > $tokenExpiry) {
             return null;
         }
 
@@ -181,10 +181,11 @@ class Auth
     {
         $user = self::user();
 
-        if (!$user) {
-            header('Location: ' . $redirectUrl . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
-            exit;
-        }
+        // if (!$user) {
+        //     http_response_code(302);
+        //     header('Location: ' . $redirectUrl . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        //     exit;
+        // }
 
         return $user;
     }

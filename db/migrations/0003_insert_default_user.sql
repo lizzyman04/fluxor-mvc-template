@@ -2,7 +2,7 @@
 INSERT IGNORE INTO users (name, email, password, role) VALUES (
     'Admin User',
     'admin@example.com',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2a$12$vc2KRrwyOQrgbfc7c5cYkO1FAqeQzVyobjnIDnZRpEdcR4LOg1vn.',
     'admin'
 );
 
@@ -10,6 +10,6 @@ INSERT IGNORE INTO users (name, email, password, role) VALUES (
 INSERT IGNORE INTO users (name, email, password, role) VALUES (
     'Demo User',
     'demo@example.com',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2a$12$bIH6BN9af4q.T.zSqjUyVeqMjZd30fYP8/feM9HKYd0kfBkovbS86',
     'user'
 );

@@ -20,11 +20,5 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // Initialize the Fluxor application
 $app = new Fluxor\App();
 
-// Configure paths
-$app->setConfig([
-    'router_path' => __DIR__ . '/../app/router',
-    'views_path' => __DIR__ . '/../src/Views',
-]);
-
 // Run the application
 $app->run();

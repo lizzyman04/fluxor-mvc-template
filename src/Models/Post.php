@@ -35,10 +35,10 @@ class Post
     #[Column(type: "datetime", name: "updated_at")]
     private DateTimeInterface $updatedAt;
 
-    #[BelongsTo(target: User::class, innerKey: 'user_id', fkAction: 'CASCADE')]
-    private User $user;
+    #[BelongsTo(target: User::class, innerKey: 'user_id', outerKey: 'id', fkAction: 'CASCADE')]
+    private $user;
 
-    public function __construct(string $title, string $content, int $userId)
+    public function __construct(string $title = '', string $content = '', int $userId = 0)
     {
         $this->title = $title;
         $this->content = $content;
@@ -78,7 +78,7 @@ class Post
         return $this->updatedAt;
     }
 
-    public function getUser(): User
+    public function getUser(): ?User
     {
         return $this->user;
     }
@@ -98,13 +98,18 @@ class Post
         return $this;
     }
 
+    public function setUserId(int $userId): self
+    {
+        $this->userId = $userId;
+        return $this;
+    }
+
     public function updateTimestamps(): self
     {
         $this->updatedAt = new DateTime();
         return $this;
     }
 
-    // Helpers
     public function getExcerpt(int $length = 150): string
     {
         $text = strip_tags($this->content);

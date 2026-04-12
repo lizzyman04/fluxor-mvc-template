@@ -2,44 +2,41 @@
 
 namespace Source\Controllers;
 
-use Core\Helpers\AuthHelper;
-use Core\Helpers\ORMHelper;
+use Fluxor\Controller;
+use Fluxor\Response;
+use App\Core\Auth;
+use App\Core\ORMHelper;
 use Source\Models\Post;
-use Core\View;
 
-class HomeController
+class HomeController extends Controller
 {
     public function index()
     {
-        $credentials = AuthHelper::check();
+        $user = Auth::user();
 
-        if ($credentials) {
-            $posts = ORMHelper::select(Post::class)
-                ->where('user_id', $credentials['user_id'])
-                ->fetchAll();
+        if ($user) {
+            $posts = ORMHelper::findAllBy(Post::class, 'userId', $user['user_id']);
 
-            View::render('home', [
+            return Response::view('home', [
                 'title' => 'Home',
                 'posts' => $posts,
                 'user_logged_in' => true,
-                'user_name' => $credentials['name'],
-                'user_role' => $credentials['role']
-            ]);
-        } else {
-            View::render('home', [
-                'title' => 'Home',
-                'message' => 'You are not logged in.',
-                'user_logged_in' => false
+                'user_name' => $user['name'],
+                'user_role' => $user['role']
             ]);
         }
+
+        return Response::view('home', [
+            'title' => 'Home',
+            'message' => 'Welcome to Fluxor MVC Template',
+            'user_logged_in' => false
+        ]);
     }
 
-    public function notFound()
+    public function about()
     {
-        http_response_code(404);
-        View::render('404', [
-            'title' => 'Page Not Found',
-            'message' => 'Page not found.',
+        return Response::view('about', [
+            'title' => 'About Fluxor'
         ]);
     }
 }

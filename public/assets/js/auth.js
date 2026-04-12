@@ -28,7 +28,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '/login',
+            url: '/auth/login',
             method: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
@@ -38,14 +38,14 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     showNotification($successContainer, 'Login successful! Redirecting...');
-                    setTimeout(() => window.location.href = response.data.redirect ?? '/', 1000);
+                    setTimeout(() => window.location.href = response.data.redirect || '/', 1000);
                 } else {
-                    showNotification($errorContainer, response.data.error || 'Login failed.');
+                    showNotification($errorContainer, response.message || 'Login failed.');
                 }
             },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error('Login error:', textStatus, errorThrown);
-                showNotification($errorContainer, 'An error occurred during login.');
+            error: function (jqXHR) {
+                const errorMsg = jqXHR.responseJSON?.message || 'An error occurred during login.';
+                showNotification($errorContainer, errorMsg);
             },
             complete: function () {
                 $loginForm.find('button').prop('disabled', false).text('Login');
@@ -71,24 +71,24 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: '/register',
+            url: '/auth/register',
             method: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
             beforeSend: function () {
                 $registerForm.find('button').prop('disabled', true).text('Registering...');
             },
-            success: function (data) {
-                if (response.data.success) {
+            success: function (response) {
+                if (response.success) {
                     showNotification($successContainer, 'Registration successful! Redirecting...');
-                    setTimeout(() => window.location.href = response.data.redirect, 1000);
+                    setTimeout(() => window.location.href = response.data.redirect || '/', 1000);
                 } else {
-                    showNotification($errorContainer, response.data.error || 'Registration failed.');
+                    showNotification($errorContainer, response.message || 'Registration failed.');
                 }
             },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error('Registration error:', textStatus, errorThrown);
-                showNotification($errorContainer, 'An error occurred during registration.');
+            error: function (jqXHR) {
+                const errorMsg = jqXHR.responseJSON?.message || 'An error occurred during registration.';
+                showNotification($errorContainer, errorMsg);
             },
             complete: function () {
                 $registerForm.find('button').prop('disabled', false).text('Register');
