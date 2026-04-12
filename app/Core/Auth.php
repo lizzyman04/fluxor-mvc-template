@@ -181,11 +181,11 @@ class Auth
     {
         $user = self::user();
 
-        // if (!$user) {
-        //     http_response_code(302);
-        //     header('Location: ' . $redirectUrl . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
-        //     exit;
-        // }
+        if (!$user) {
+            http_response_code(302);
+            header('Location: ' . $redirectUrl . '?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+            exit;
+        }
 
         return $user;
     }

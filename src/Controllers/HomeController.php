@@ -32,11 +32,4 @@ class HomeController extends Controller
             'user_logged_in' => false
         ]);
     }
-
-    public function about()
-    {
-        return Response::view('about', [
-            'title' => 'About Fluxor'
-        ]);
-    }
 }
