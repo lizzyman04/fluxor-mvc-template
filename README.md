@@ -93,11 +93,15 @@ Visit `http://localhost:8000` in your browser.
 ### Development Commands
 
 ```bash
-composer dev          # Start development server
-composer prod         # Start production server
-composer migrate      # Run all database migrations
-composer migrate:run  # Run a specific migration
-composer test         # Run PHPUnit tests
+composer dev                 # Start development server
+composer prod                # Start production server
+composer migrate             # Run pending migrations
+composer migrate:rollback    # Rollback last migration batch
+composer migrate:rollback:all # Rollback all migrations
+composer migrate:status      # Show migration status
+composer seed                # Run all seeders
+composer migration:create    # Scaffold a new migration class
+composer test                # Run PHPUnit tests
 ```
 
 ---
@@ -130,14 +134,13 @@ fluxor-mvc-template/
 │   ├── core/                    # Database core files
 │   │   ├── bootstrap.php        # Database bootstrap
 │   │   ├── connection.php       # Database connection config
-│   │   └── orm.php              # Cycle ORM factory
-│   ├── migrations/              # SQL migrations
-│   │   ├── 0001_create_users_table.sql
-│   │   ├── 0002_create_posts_table.sql
-│   │   └── 0003_insert_default_user.sql
-│   └── scripts/                 # Migration scripts
-│       ├── migrate-all.php      # Run all migrations
-│       └── migrate.php          # Run specific migration
+│   │   ├── orm.php              # Cycle ORM factory
+│   │   └── phinx.php            # Phinx migration configuration
+│   ├── migrations/              # Phinx PHP migration classes
+│   │   ├── 20240101000001_create_users_table.php
+│   │   └── 20240101000002_create_posts_table.php
+│   └── seeders/                 # Phinx seeder classes
+│       └── DefaultUsersSeeder.php
 ├── public/
 │   ├── index.php                # Front controller
 │   ├── .htaccess                # Apache rewrite rules
@@ -233,38 +236,59 @@ $app->run();
 
 ## 🗄️ Database Setup
 
+Fluxor uses **[Phinx](https://phinx.org/)** for database migrations — a framework-agnostic migration tool with rollback support, migration tracking, and PHP-based migration classes.
+
 ### Running Migrations
 
 ```bash
-# Run all migrations
+# Run all pending migrations
 composer migrate
 
-# Run a specific migration
-composer migrate:run 0002_create_posts_table.sql
+# Check migration status
+composer migrate:status
+
+# Rollback last batch
+composer migrate:rollback
+
+# Rollback everything (reset)
+composer migrate:rollback:all
+
+# Seed default data
+composer seed
+
+# Scaffold a new migration
+composer migration:create MyMigrationName
 ```
 
-### Migration Files
+### Creating a Migration
 
-```sql
--- db/migrations/0001_create_users_table.sql
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'user') DEFAULT 'user',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email),
-    INDEX idx_role (role)
-);
+```php
+// db/migrations/20240101000003_add_avatar_to_users.php
+use Phinx\Migration\AbstractMigration;
+
+final class AddAvatarToUsers extends AbstractMigration
+{
+    public function change(): void
+    {
+        $this->table('users')
+            ->addColumn('avatar', 'string', ['limit' => 255, 'null' => true, 'default' => null])
+            ->update();
+    }
+}
 ```
 
-### Default User
+Phinx automatically tracks which migrations have run in the `phinx_migrations` table and generates `up()`/`down()` rollback logic from `change()`.
 
-After running migrations, a default admin user is created:
-- **Email**: `admin@example.com`
-- **Password**: `admin123`
+### Default Users
+
+After running `composer migrate && composer seed`, two users are created:
+
+| Name | Email | Password | Role |
+|------|-------|----------|------|
+| Admin User | `admin@example.com` | `admin123` | admin |
+| Demo User | `demo@example.com` | `demo123` | user |
+
+> **Security**: Change these credentials immediately in production.
 
 ---
 
