@@ -154,6 +154,12 @@ main() {
         fi
     fi
 
+    COMPOSER_ARGS="--no-interaction --no-progress"
+    if [[ "${FLUXOR_NO_DEV:-false}" == "true" ]]; then
+        COMPOSER_ARGS="$COMPOSER_ARGS --no-dev"
+        info "Production mode: skipping dev dependencies"
+    fi
+
     # ── Download template ─────────────────────────────────────────────────────
     info "Downloading template (${REPO}@${BRANCH})..."
     local archive="${TMPDIR_BASE}/template.tar.gz"
@@ -220,23 +226,31 @@ main() {
 
     # ── Install Composer dependencies ─────────────────────────────────────────
     info "Installing Composer dependencies..."
-    composer update --no-interaction --no-progress
+    composer update $COMPOSER_ARGS
     ok "Dependencies installed."
 
     # ── Run migrations ────────────────────────────────────────────────────────
     info "Running database migrations..."
-    if composer migrate; then
-        ok "Migrations complete."
+    if grep -q "^DB_DATABASE=" .env 2>/dev/null && ! grep -q "^DB_DATABASE=$" .env; then
+        if composer migrate; then
+            ok "Migrations complete."
+        else
+            warn "Migration failed. Check DB credentials in .env then run:  composer migrate"
+        fi
     else
-        warn "Migration failed. Configure DB credentials in .env then run:  composer migrate"
+        warn "Database not configured. Skipping migrations."
     fi
 
     # ── Run seeders ───────────────────────────────────────────────────────────
     info "Running database seeders..."
-    if composer seed; then
-        ok "Seeders complete."
+    if grep -q "^DB_DATABASE=" .env 2>/dev/null && ! grep -q "^DB_DATABASE=$" .env; then
+        if composer seed; then
+            ok "Seeders complete."
+        else
+            warn "Seeder failed. Run manually:  composer seed"
+        fi
     else
-        warn "Seeder failed. Run manually:  composer seed"
+        warn "Database not configured. Skipping seeders."
     fi
 
     # ── Done ──────────────────────────────────────────────────────────────────

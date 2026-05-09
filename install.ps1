@@ -155,6 +155,12 @@ try {
         $isUpdate = $true
     }
 
+    $composerArgs = @("--no-interaction", "--no-progress")
+    if ($env:FLUXOR_NO_DEV -eq "true") {
+        $composerArgs += "--no-dev"
+        Write-Step "Production mode: skipping dev dependencies"
+    }
+
     # ── Download template ─────────────────────────────────────────────────────
     Write-Step "Downloading template ($Repo @ $Branch)..."
     New-Item -ItemType Directory -Force -Path $TmpDir | Out-Null
@@ -225,26 +231,36 @@ try {
 
     # ── Install Composer dependencies ─────────────────────────────────────────
     Write-Step "Installing Composer dependencies..."
-    & composer update --no-interaction --no-progress
+    & composer update @composerArgs
     if ($LASTEXITCODE -ne 0) { Write-Fail "composer update failed." }
     Write-Ok "Dependencies installed."
 
     # ── Run migrations ────────────────────────────────────────────────────────
     Write-Step "Running database migrations..."
-    & composer migrate
-    if ($LASTEXITCODE -eq 0) {
-        Write-Ok "Migrations complete."
+    $envContent = Get-Content ".env" -Raw -ErrorAction SilentlyContinue
+    if ($envContent -match '(?m)^DB_DATABASE=(.+)$' -and $Matches[1] -ne '') {
+        & composer migrate
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "Migrations complete."
+        } else {
+            Write-Warn "Migration failed. Edit .env with DB credentials then run: composer migrate"
+        }
     } else {
-        Write-Warn "Migration failed. Edit .env with DB credentials then run:  composer migrate"
+        Write-Warn "Database not configured. Skipping migrations."
     }
 
     # ── Run seeders ───────────────────────────────────────────────────────────
     Write-Step "Running database seeders..."
-    & composer seed
-    if ($LASTEXITCODE -eq 0) {
-        Write-Ok "Seeders complete."
+    $envContent = Get-Content ".env" -Raw -ErrorAction SilentlyContinue
+    if ($envContent -match '(?m)^DB_DATABASE=(.+)$' -and $Matches[1] -ne '') {
+        & composer seed
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "Seeders complete."
+        } else {
+            Write-Warn "Seeder failed. Run manually:  composer seed"
+        }
     } else {
-        Write-Warn "Seeder failed. Run manually:  composer seed"
+        Write-Warn "Database not configured. Skipping seeders."
     }
 
     # ── Done ──────────────────────────────────────────────────────────────────
