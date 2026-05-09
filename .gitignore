@@ -5,11 +5,6 @@ composer.lock
 # Ignore the environment configuration file (contains sensitive information)
 .env
 
-# Ignore the compiled classes and cache
-/cache/
-# Ignore the node_modules folder if you use Node.js for frontend tasks (optional)
-node_modules/
-
 # Ignore OS-specific files
 .DS_Store
 Thumbs.db
@@ -22,14 +17,6 @@ Thumbs.db
 
 # Ignore log files
 *.log
-
-# Ignore uploads and temporary files
-/uploads/
-/tmp/
-
-# Ignore compiled files
-public/assets/css/*
-!public/assets/css/README
 
 # Ignore PHPUnit or other testing results
 phpunit.xml
