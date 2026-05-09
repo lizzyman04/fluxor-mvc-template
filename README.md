@@ -6,6 +6,30 @@
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.1-8892BF.svg)](https://php.net)
 [![Fluxor Version](https://img.shields.io/badge/fluxor-%5E1.0-4f46e5.svg)](https://github.com/lizzyman04/fluxor)
 
+## ⚡ One-Line Installation
+
+**New project:**
+```bash
+composer create-project lizzyman04/fluxor-php my-app
+cd my-app
+curl -fsSL https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.sh | bash
+```
+
+**Existing Fluxor project:**
+```bash
+cd your-existing-fluxor-app
+curl -fsSL https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.ps1 | iex
+```
+
+> The installer is **idempotent** — safe to run multiple times. On an existing project it backs up replaced directories with a `.bak.TIMESTAMP` suffix and never overwrites existing `.env` values.
+
+---
+
 ## 📋 Table of Contents
 
 1. [Overview](#-overview)
@@ -65,43 +89,73 @@ Unlike traditional MVC templates, Fluxor MVC Template uses **file-based routing*
 
 ## 🚀 Installation
 
-### Quick Start
+### New Project
 
 ```bash
-# Clone the repository
-git clone https://github.com/lizzyman04/fluxor-mvc-template.git my-app
+# 1. Create a bare Fluxor project
+composer create-project lizzyman04/fluxor-php my-app
 cd my-app
 
-# Install dependencies
-composer install
+# 2. Run the installer (Linux / macOS)
+curl -fsSL https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.sh | bash
 
-# Copy environment configuration
-cp .env.example .env
-
-# Generate application key and configure database
-# Edit .env with your database credentials
-
-# Run database migrations
-composer migrate
-
-# Start the development server
-composer dev
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.ps1 | iex
 ```
 
-Visit `http://localhost:8000` in your browser.
+The installer will:
+1. Download and copy `app/`, `src/`, `db/`, and `public/assets/` from this template
+2. Merge `composer.json` (your `name`, `description`, `authors` are preserved)
+3. Add missing keys to `.env` without touching your existing values
+4. Run `composer update` to install dependencies
+5. Run migrations and seeders **only if `DB_DATABASE` is set in `.env`**
+
+### Existing Fluxor Project
+
+```bash
+cd your-existing-fluxor-app
+curl -fsSL https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.sh | bash
+```
+
+The installer detects an existing project (via `app/router/` or `composer.json`) and:
+- **Backs up** replaced directories as `app.bak.YYYYMMDD_HHmmss`, `src.bak.…`, `db.bak.…`
+- **Preserves** existing files in `public/assets/` (copies only new files)
+- **Preserves** all existing `.env` values — only missing keys are added
+
+### Production Install (no dev dependencies)
+
+```bash
+FLUXOR_NO_DEV=true curl -fsSL https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.sh | bash
+
+# PowerShell
+$env:FLUXOR_NO_DEV = "true"; irm https://raw.githubusercontent.com/lizzyman04/fluxor-mvc-template/main/install.ps1 | iex
+```
+
+### Manual Install
+
+```bash
+git clone https://github.com/lizzyman04/fluxor-mvc-template.git my-app
+cd my-app
+composer install
+cp .env.example .env
+# Edit .env with your database credentials
+composer migrate
+composer seed
+composer dev
+```
 
 ### Development Commands
 
 ```bash
-composer dev                 # Start development server
-composer prod                # Start production server
-composer migrate             # Run pending migrations
-composer migrate:rollback    # Rollback last migration batch
+composer dev                  # Start development server (localhost:8000)
+composer prod                 # Start production server (0.0.0.0:8000)
+composer migrate              # Run pending migrations
+composer migrate:rollback     # Rollback last migration batch
 composer migrate:rollback:all # Rollback all migrations
-composer migrate:status      # Show migration status
-composer seed                # Run all seeders
-composer migration:create    # Scaffold a new migration class
-composer test                # Run PHPUnit tests
+composer migrate:status       # Show migration status
+composer seed                 # Run all seeders
+composer migration:create     # Scaffold a new migration class
+composer test                 # Run PHPUnit tests
 ```
 
 ---
@@ -781,11 +835,14 @@ composer install --no-dev --optimize-autoloader
 | Issue | Solution |
 |-------|----------|
 | **Database connection failed** | Verify `.env` database credentials and ensure database server is running |
-| **Migration errors** | Run `composer migrate` to recreate tables |
+| **Migrations skipped after install** | Set `DB_DATABASE` in `.env` and run `composer migrate` manually |
+| **Migration errors** | Run `composer migrate:rollback:all` then `composer migrate` to recreate tables |
 | **404 errors** | Check `.htaccess` or nginx configuration |
 | **Authentication not working** | Verify `AUTH_SECRET_KEY` in `.env` |
 | **Views not found** | Check `views_path` configuration in `public/index.php` |
 | **CSRF token invalid** | Clear browser cookies and session |
+| **Installer overwrote my files** | Restore from the `.bak.TIMESTAMP` backup directories created at install time |
+| **Install script fails on macOS** | `grep -P` requires GNU grep — install via `brew install grep` and retry |
 
 ### Logs
 
