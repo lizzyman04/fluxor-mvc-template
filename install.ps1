@@ -267,10 +267,12 @@ try {
     Write-Host ""
     Write-Host "  Installation complete!" -ForegroundColor Green
     Write-Host ""
+    $appPort = ((Get-Content ".env" -ErrorAction SilentlyContinue | Select-String "^APP_PORT=") -replace "^APP_PORT=", "")
+    if ([string]::IsNullOrWhiteSpace($appPort)) { $appPort = "8000" }
     Write-Host "  Next steps:"
     Write-Host "    1. Edit .env with your database credentials"
     Write-Host "    2. Start the dev server:  composer dev"
-    Write-Host "    3. Open in browser:       http://localhost:8000"
+    Write-Host "    3. Open in browser:       http://localhost:$appPort"
     Write-Host ""
 
 } finally {

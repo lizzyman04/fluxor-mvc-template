@@ -260,7 +260,7 @@ main() {
     echo "  Next steps:"
     echo "    1. Edit .env with your database credentials"
     echo "    2. Start the dev server:  composer dev"
-    echo "    3. Open in browser:       http://localhost:8000"
+    echo "    3. Open in browser:       http://localhost:$(grep -Po '(?<=^APP_PORT=).*' .env 2>/dev/null || echo '8000')"
     echo ""
 }
 
